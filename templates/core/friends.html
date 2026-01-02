@@ -1,0 +1,693 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Friends - Barta 2.0{% endblock %}
+
+{% block extra_css %}
+<style>
+    .friends-container {
+        max-width: 900px;
+        margin: 2rem auto;
+    }
+    
+    .friends-header {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow);
+        border: 1px solid #e9ecef;
+        text-align: center;
+    }
+    
+    .friends-tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .friends-tab {
+        padding: 0.75rem 1.5rem;
+        border: 1px solid #e9ecef;
+        background: white;
+        border-radius: 25px;
+        text-decoration: none;
+        color: #6c757d;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    
+    .friends-tab.active {
+        background: var(--gradient);
+        border-color: transparent;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .friends-tab:hover {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+    
+    .friends-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .friend-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+    
+    .friend-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    }
+    
+    .friend-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 2rem;
+        margin: 0 auto 1rem;
+        position: relative;
+    }
+    
+    .online-indicator {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        width: 20px;
+        height: 20px;
+        background: #28a745;
+        border: 3px solid white;
+        border-radius: 50%;
+    }
+    
+    .friend-info {
+        margin-bottom: 1rem;
+    }
+    
+    .friend-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    
+    .friend-username {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .friend-stats {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 1rem;
+        padding: 0.5rem 0;
+        border-top: 1px solid #f8f9fa;
+        border-bottom: 1px solid #f8f9fa;
+    }
+    
+    .friend-stat {
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-weight: 600;
+        color: var(--primary-color);
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .friend-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        border: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .btn-message {
+        background: var(--gradient);
+        color: white;
+    }
+    
+    .btn-message:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+    
+    .btn-unfollow {
+        background: #f8f9fa;
+        color: #6c757d;
+        border: 1px solid #e9ecef;
+    }
+    
+    .btn-unfollow:hover {
+        background: #dc3545;
+        color: white;
+        border-color: #dc3545;
+    }
+    
+    .btn-follow {
+        background: #28a745;
+        color: white;
+    }
+    
+    .btn-follow:hover {
+        background: #218838;
+        transform: translateY(-1px);
+    }
+    
+    .search-section {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow);
+        border: 1px solid #e9ecef;
+    }
+    
+    .search-form {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .search-input-group {
+        flex-grow: 1;
+        position: relative;
+        display: flex;
+        align-items: center;
+        min-width: 300px;
+    }
+    
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        color: #6c757d;
+        z-index: 2;
+    }
+    
+    .search-input {
+        flex-grow: 1;
+        border: 1px solid #e9ecef;
+        border-radius: 25px;
+        padding: 0.75rem 1rem 0.75rem 3rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: var(--primary-color);
+    }
+    
+    .clear-search {
+        position: absolute;
+        right: 1rem;
+        background: none;
+        border: none;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+    
+    .clear-search:hover {
+        background: #f8f9fa;
+        color: #dc3545;
+    }
+    
+    .search-btn {
+        background: var(--gradient);
+        border: none;
+        border-radius: 25px;
+        padding: 0.75rem 1.5rem;
+        color: white;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .search-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+    
+    .advanced-toggle {
+        border-radius: 25px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+    }
+    
+    .advanced-search {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+    }
+    
+    .search-suggestions {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+    }
+    
+    .suggestions-header {
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .suggestion-item {
+        padding: 0.5rem;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: background 0.2s ease;
+    }
+    
+    .suggestion-item:hover {
+        background: #f8f9fa;
+    }
+    
+    .quick-filters {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .filter-chip {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: #6c757d;
+    }
+    
+    .filter-chip:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+    
+    .filter-chip.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+    
+    .mutual-friends {
+        color: #6c757d;
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: #e9ecef;
+        margin-bottom: 1rem;
+    }
+    
+    .friend-request-card {
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .pending-indicator {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: #ffc107;
+        color: white;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: bold;
+    }
+    
+    @media (max-width: 768px) {
+        .friends-container {
+            margin: 1rem;
+        }
+        
+        .friends-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .friends-tabs {
+            justify-content: flex-start;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+        
+        .search-form {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="friends-container">
+        <!-- Header -->
+        <div class="friends-header">
+            <h2><i class="fas fa-users me-2"></i>Friends & Connections</h2>
+            <p class="text-muted mb-0">Manage your social connections on Barta 2.0</p>
+        </div>
+        
+        <!-- Search Section -->
+        <div class="search-section">
+            <form method="get" class="search-form" id="searchForm">
+                <div class="search-input-group">
+                    <i class="fas fa-search search-icon"></i>
+                    <input 
+                        type="text" 
+                        name="search" 
+                        class="form-control search-input" 
+                        placeholder="Search for people by name or username..." 
+                        value="{{ search_query }}"
+                        id="searchInput"
+                        autocomplete="off"
+                    >
+                    <input type="hidden" name="tab" value="{{ tab }}">
+                    {% if search_query %}
+                    <button type="submit" class="clear-search" name="search" value="">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    {% endif %}
+                </div>
+                
+                <button type="submit" class="btn search-btn">
+                    <i class="fas fa-search me-1"></i>Search
+                </button>
+                
+                <button type="button" class="btn btn-outline-secondary advanced-toggle" data-bs-toggle="collapse" data-bs-target="#advancedSearch">
+                    <i class="fas fa-sliders-h me-1"></i>Advanced Search
+                </button>
+            </form>
+            
+            <!-- Advanced Search Options -->
+            <div class="advanced-search mt-3" id="advancedSearch" style="display: none;">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label class="form-label small">Sort by:</label>
+                        <select name="sort" class="form-select form-select-sm">
+                            <option value="name">Name (A-Z)</option>
+                            <option value="recent">Recently Active</option>
+                            <option value="mutual">Mutual Friends</option>
+                            <option value="followers">Most Followers</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">Filter by:</label>
+                        <select name="filter" class="form-select form-select-sm">
+                            <option value="all">All People</option>
+                            <option value="verified">Verified Only</option>
+                            <option value="active">Recently Active</option>
+                            <option value="mutual">Mutual Connections</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">Location:</label>
+                        <input type="text" name="location" class="form-control form-control-sm" placeholder="City or Country">
+                    </div>
+                </div>
+                
+                <div class="mt-2">
+                    <button type="submit" class="btn btn-primary btn-sm">Apply Filters</button>
+                    <a href="{% url 'friends' %}" class="btn btn-outline-secondary btn-sm">Reset</a>
+                </div>
+            </div>
+            
+            <!-- Search Suggestions -->
+            <div class="search-suggestions mt-2" id="searchSuggestions" style="display: none;">
+                <div class="suggestions-header">
+                    <small class="text-muted">Recent searches:</small>
+                </div>
+                <div class="suggestions-list" id="suggestionsList">
+                    <!-- Dynamic suggestions will be populated here -->
+                </div>
+            </div>
+            
+            <!-- Quick Filter Chips -->
+            <div class="quick-filters mt-3">
+                <span class="filter-chip" data-filter="mutual">
+                    <i class="fas fa-user-friends me-1"></i>Mutual Friends
+                </span>
+                <span class="filter-chip" data-filter="recent">
+                    <i class="fas fa-clock me-1"></i>Recent
+                </span>
+                <span class="filter-chip" data-filter="verified">
+                    <i class="fas fa-check-circle me-1"></i>Verified
+                </span>
+                <span class="filter-chip" data-filter="active">
+                    <i class="fas fa-circle me-1 text-success"></i>Online
+                </span>
+            </div>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="friends-tabs">
+            <a href="{% url 'friends' %}" class="friends-tab {% if not tab or tab == 'following' %}active{% endif %}">
+                <i class="fas fa-user-friends me-1"></i>Following ({{ following_count }})
+            </a>
+            <a href="{% url 'friends' %}?tab=followers" class="friends-tab {% if tab == 'followers' %}active{% endif %}">
+                <i class="fas fa-users me-1"></i>Followers ({{ followers_count }})
+            </a>
+            <a href="{% url 'friends' %}?tab=suggestions" class="friends-tab {% if tab == 'suggestions' %}active{% endif %}">
+                <i class="fas fa-user-plus me-1"></i>Suggestions
+            </a>
+            <a href="{% url 'friends' %}?tab=mutual" class="friends-tab {% if tab == 'mutual' %}active{% endif %}">
+                <i class="fas fa-handshake me-1"></i>Mutual Friends
+            </a>
+        </div>
+        
+        <!-- Friends Grid -->
+        <div class="friends-grid">
+            {% for person in people %}
+            <div class="friend-card {% if tab == 'requests' %}friend-request-card{% endif %}">
+                <div class="friend-avatar">
+                    {% if person.profile_picture %}
+                        <img src="{{ person.profile_picture.url }}" alt="Profile" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
+                    {% else %}
+                        {{ person.user.first_name|first|upper }}{{ person.user.last_name|first|upper }}
+                    {% endif %}
+                    
+                    {% if person.is_online %}
+                    <div class="online-indicator"></div>
+                    {% endif %}
+                    
+                    {% if tab == 'requests' %}
+                    <div class="pending-indicator">!</div>
+                    {% endif %}
+                </div>
+                
+                <div class="friend-info">
+                    <div class="friend-name">
+                        <a href="{% url 'profile_user' person.user.username %}" class="text-decoration-none text-dark">
+                            {{ person.user.first_name }} {{ person.user.last_name }}
+                        </a>
+                    </div>
+                    <div class="friend-username">@{{ person.user.username }}</div>
+                    
+                    {% if person.mutual_friends_count %}
+                    <div class="mutual-friends">
+                        <i class="fas fa-users me-1"></i>{{ person.mutual_friends_count }} mutual friend{{ person.mutual_friends_count|pluralize }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if person.bio %}
+                    <div class="friend-bio text-muted" style="font-size: 0.85rem; margin-top: 0.5rem;">
+                        {{ person.bio|truncatewords:15 }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="friend-stats">
+                    <div class="friend-stat">
+                        <span class="stat-number">{{ person.posts.count }}</span>
+                        <span class="stat-label">Posts</span>
+                    </div>
+                    <div class="friend-stat">
+                        <span class="stat-number">{{ person.followers.count }}</span>
+                        <span class="stat-label">Followers</span>
+                    </div>
+                    <div class="friend-stat">
+                        <span class="stat-number">{{ person.following.count }}</span>
+                        <span class="stat-label">Following</span>
+                    </div>
+                </div>
+                
+                <div class="friend-actions">
+                    {% if person.user != user %}
+                        {% if tab == 'following' or person in user.owner.following.all %}
+                        <form action="{% url 'follow_user' person.user.username %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn action-btn btn-unfollow">
+                                <i class="fas fa-user-times me-1"></i>Unfollow
+                            </button>
+                        </form>
+                        {% else %}
+                        <form action="{% url 'follow_user' person.user.username %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn action-btn btn-follow">
+                                <i class="fas fa-user-plus me-1"></i>Follow
+                            </button>
+                        </form>
+                        {% endif %}
+                        
+                        <a href="{% url 'conversation' person.user.username %}" class="btn action-btn btn-message">
+                            <i class="fas fa-comment me-1"></i>Message
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        {% if tab == 'following' %}
+                            <i class="fas fa-user-friends"></i>
+                        {% elif tab == 'followers' %}
+                            <i class="fas fa-users"></i>
+                        {% elif tab == 'suggestions' %}
+                            <i class="fas fa-user-plus"></i>
+                        {% elif tab == 'mutual' %}
+                            <i class="fas fa-handshake"></i>
+                        {% else %}
+                            <i class="fas fa-search"></i>
+                        {% endif %}
+                    </div>
+                    <h5>
+                        {% if request.GET.search %}
+                            No results found
+                        {% elif tab == 'following' %}
+                            Not following anyone yet
+                        {% elif tab == 'followers' %}
+                            No followers yet
+                        {% elif tab == 'suggestions' %}
+                            No suggestions available
+                        {% elif tab == 'mutual' %}
+                            No mutual friends found
+                        {% else %}
+                            No friends found
+                        {% endif %}
+                    </h5>
+                    <p class="text-muted">
+                        {% if request.GET.search %}
+                            Try searching for a different name or username.
+                        {% elif tab == 'following' %}
+                            Start following people to build your network!
+                        {% elif tab == 'followers' %}
+                            Share your profile to get followers.
+                        {% elif tab == 'suggestions' %}
+                            Check back later for new suggestions.
+                        {% elif tab == 'mutual' %}
+                            Connect with more people to find mutual friends.
+                        {% else %}
+                            Start connecting with people to build your social network.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="pagination-container">
+            <nav aria-label="Friends pagination">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if tab %}&tab={{ tab }}{% endif %}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if tab %}&tab={{ tab }}{% endif %}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if tab %}&tab={{ tab }}{% endif %}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

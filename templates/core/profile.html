@@ -1,0 +1,666 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ profile_user.get_full_name|default:profile_user.username }} - Profile{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        padding: 0;
+    }
+    
+    .cover-photo {
+        height: 300px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        position: relative;
+        overflow: hidden;
+        border-radius: 0 0 20px 20px;
+    }
+    
+    .cover-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .cover-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+        padding: 2rem;
+    }
+    
+    .profile-header {
+        position: relative;
+        background: white;
+        margin: -80px 2rem 2rem 2rem;
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        padding: 2rem;
+        z-index: 10;
+    }
+    
+    .profile-picture {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 5px solid white;
+        margin-top: -75px;
+        margin-bottom: 1rem;
+        object-fit: cover;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .profile-picture-placeholder {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 5px solid white;
+        margin-top: -75px;
+        margin-bottom: 1rem;
+        background: var(--gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 3rem;
+        font-weight: 700;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .profile-info h1 {
+        margin: 0;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-dark);
+    }
+    
+    .profile-username {
+        color: var(--text-light);
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .profile-bio {
+        font-size: 1.1rem;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+    }
+    
+    .profile-bio.text-muted {
+        font-style: italic;
+        font-size: 1rem;
+    }
+    
+    .profile-bio.text-muted a {
+        color: var(--primary-color);
+        font-weight: 500;
+    }
+    
+    .profile-bio.text-muted a:hover {
+        text-decoration: underline !important;
+    }
+    
+    .profile-details {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .profile-detail {
+        display: flex;
+        align-items: center;
+        color: var(--text-light);
+        font-size: 0.95rem;
+    }
+    
+    .profile-detail i {
+        margin-right: 0.5rem;
+        width: 16px;
+    }
+    
+    .profile-stats {
+        display: flex;
+        gap: 2rem;
+        margin: 1.5rem 0;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-number {
+        display: block;
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .profile-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-follow {
+        background: var(--gradient);
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-follow:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    
+    .btn-following {
+        background: var(--accent-color);
+        border: none;
+        color: white;
+    }
+    
+    .btn-pending {
+        background: #ffc107;
+        border: none;
+        color: white;
+    }
+    
+    .posts-section {
+        margin: 2rem;
+    }
+    
+    .posts-header {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow);
+        text-align: center;
+    }
+    
+    .posts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+    
+    .post-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        transition: transform 0.3s ease;
+    }
+    
+    .post-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .post-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+    
+    .post-content {
+        padding: 1.5rem;
+    }
+    
+    .post-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-dark);
+    }
+    
+    .post-text {
+        color: var(--text-light);
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+    
+    .post-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+        color: var(--text-light);
+    }
+    
+    .post-date {
+        display: flex;
+        align-items: center;
+    }
+    
+    .post-date i {
+        margin-right: 0.5rem;
+    }
+    
+    .no-posts {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: var(--text-light);
+    }
+    
+    .no-posts i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .post-management {
+        display: flex;
+        gap: 0.25rem;
+        margin-top: 0.5rem;
+    }
+    
+    .post-management .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .verified-badge {
+        color: var(--primary-color);
+        margin-left: 0.5rem;
+    }
+    
+    .private-account {
+        text-align: center;
+        padding: 3rem 2rem;
+        background: white;
+        border-radius: 15px;
+        box-shadow: var(--shadow);
+        margin: 2rem;
+    }
+    
+    .private-account i {
+        font-size: 4rem;
+        color: var(--text-light);
+        margin-bottom: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .cover-photo {
+            height: 200px;
+        }
+        
+        .profile-header {
+            margin: -60px 1rem 2rem 1rem;
+            padding: 1.5rem;
+        }
+        
+        .profile-picture,
+        .profile-picture-placeholder {
+            width: 120px;
+            height: 120px;
+            margin-top: -60px;
+        }
+        
+        .profile-picture-placeholder {
+            font-size: 2.5rem;
+        }
+        
+        .profile-info h1 {
+            font-size: 2rem;
+        }
+        
+        .profile-stats {
+            gap: 1rem;
+        }
+        
+        .posts-section {
+            margin: 1rem;
+        }
+        
+        .posts-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Cover Photo -->
+    <div class="cover-photo">
+        {% if owner.cover_photo %}
+            <img src="{{ owner.cover_photo.url }}" alt="Cover Photo">
+        {% endif %}
+        <div class="cover-overlay"></div>
+    </div>
+    
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="row align-items-start">
+            <div class="col-md-8">
+                <div class="d-flex align-items-start">
+                    <!-- Profile Picture -->
+                    <div class="me-4">
+                        {% if owner.profile_picture %}
+                            <img src="{{ owner.profile_picture.url }}" alt="Profile Picture" class="profile-picture">
+                        {% else %}
+                            <div class="profile-picture-placeholder">
+                                {{ profile_user.first_name.0|default:profile_user.username.0|upper }}{{ profile_user.last_name.0|upper }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Profile Info -->
+                    <div class="profile-info flex-grow-1">
+                        <h1>
+                            {{ profile_user.get_full_name|default:profile_user.username }}
+                            {% if owner.is_verified %}
+                                <i class="fas fa-check-circle verified-badge" title="Verified Account"></i>
+                            {% endif %}
+                            {% if owner.is_private %}
+                                <i class="fas fa-lock text-muted" title="Private Account"></i>
+                            {% endif %}
+                        </h1>
+                        <div class="profile-username">@{{ profile_user.username }}</div>
+                        
+                        {% if owner.bio %}
+                            <div class="profile-bio">{{ owner.bio|linebreaksbr }}</div>
+                        {% else %}
+                            {% if is_own_profile %}
+                                <div class="profile-bio text-muted">
+                                    <i class="fas fa-plus-circle me-2"></i>
+                                    <a href="{% url 'profile_edit' %}" class="text-decoration-none">Add a bio to tell people about yourself</a>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                        
+                        <div class="profile-details">
+                            {% if owner.location %}
+                                <div class="profile-detail">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    {{ owner.location }}
+                                </div>
+                            {% endif %}
+                            
+                            {% if owner.website %}
+                                <div class="profile-detail">
+                                    <i class="fas fa-link"></i>
+                                    <a href="{{ owner.website }}" target="_blank" class="text-decoration-none">{{ owner.website }}</a>
+                                </div>
+                            {% endif %}
+                            
+                            {% if owner.phone_number and is_own_profile %}
+                                <div class="profile-detail">
+                                    <i class="fas fa-phone"></i>
+                                    {{ owner.phone_number }}
+                                </div>
+                            {% endif %}
+                            
+                            {% if owner.date_of_birth %}
+                                <div class="profile-detail">
+                                    <i class="fas fa-birthday-cake"></i>
+                                    {% if is_own_profile %}
+                                        Born {{ owner.date_of_birth|date:"F j, Y" }}
+                                    {% else %}
+                                        Born {{ owner.date_of_birth|date:"F j" }}
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            
+                            <div class="profile-detail">
+                                <i class="fas fa-calendar-alt"></i>
+                                Joined {{ owner.created_at|date:"F Y" }}
+                            </div>
+                            
+                            {% if owner.updated_at != owner.created_at %}
+                                <div class="profile-detail">
+                                    <i class="fas fa-edit"></i>
+                                    Last updated {{ owner.updated_at|timesince }} ago
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Profile Stats -->
+                        <div class="profile-stats">
+                            <div class="stat-item">
+                                <span class="stat-number">{{ post_count }}</span>
+                                <span class="stat-label">Posts</span>
+                            </div>
+                            <div class="stat-item">
+                                <a href="{% url 'followers_list' profile_user.username %}" class="text-decoration-none text-dark">
+                                    <span class="stat-number">{{ followers_count }}</span>
+                                    <span class="stat-label">Followers</span>
+                                </a>
+                            </div>
+                            <div class="stat-item">
+                                <a href="{% url 'following_list' profile_user.username %}" class="text-decoration-none text-dark">
+                                    <span class="stat-number">{{ following_count }}</span>
+                                    <span class="stat-label">Following</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Profile Actions -->
+            <div class="col-md-4 text-md-end">
+                <div class="profile-actions">
+                    {% if is_own_profile %}
+                        <a href="{% url 'profile_edit' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit me-2"></i>Edit Profile
+                        </a>
+                        <button class="btn btn-outline-secondary">
+                            <i class="fas fa-cog me-2"></i>Settings
+                        </button>
+                    {% else %}
+                        {% if is_following %}
+                            <form method="post" action="{% url 'follow_user' profile_user.username %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-follow btn-following">
+                                    <i class="fas fa-user-check me-2"></i>Following
+                                </button>
+                            </form>
+                        {% elif follow_status == 'pending' %}
+                            <button class="btn btn-follow btn-pending" disabled>
+                                <i class="fas fa-clock me-2"></i>Pending
+                            </button>
+                        {% else %}
+                            <form method="post" action="{% url 'follow_user' profile_user.username %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-follow">
+                                    <i class="fas fa-user-plus me-2"></i>Follow
+                                </button>
+                            </form>
+                        {% endif %}
+                        
+                        <a href="{% url 'conversation' profile_user.username %}" class="btn btn-outline-primary">
+                            <i class="fas fa-envelope me-2"></i>Message
+                        </a>
+                        
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-flag me-2"></i>Report</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-ban me-2"></i>Block</a></li>
+                            </ul>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Posts Section -->
+    {% if not owner.is_private or is_own_profile or is_following %}
+        <div class="posts-section">
+            <div class="posts-header">
+                <h3><i class="fas fa-images me-2"></i>Posts</h3>
+                <p class="text-muted mb-0">{{ post_count }} post{{ post_count|pluralize }}</p>
+            </div>
+            
+            {% if posts %}
+                <div class="posts-grid">
+                    {% for post in posts %}
+                        <div class="post-card">
+                            {% if post.image %}
+                                <img src="{{ post.image.url }}" alt="Post Image" class="post-image">
+                            {% endif %}
+                            
+                            <div class="post-content">
+                                {% if post.title %}
+                                    <h5 class="post-title">{{ post.title }}</h5>
+                                {% endif %}
+                                
+                                <p class="post-text">
+                                    {{ post.content|truncatewords:20 }}
+                                </p>
+                                
+                                <div class="post-meta">
+                                    <div class="post-date">
+                                        <i class="fas fa-clock"></i>
+                                        {{ post.created_at|timesince }} ago
+                                    </div>
+                                    
+                                    <div class="post-actions">
+                                        <span class="me-3">
+                                            <i class="fas fa-heart text-danger"></i>
+                                            {{ post.likes.count }}
+                                        </span>
+                                        <span class="me-3">
+                                            <i class="fas fa-comment text-primary"></i>
+                                            {{ post.comments.count }}
+                                        </span>
+                                        
+                                        <!-- Post Management Buttons for Own Profile -->
+                                        {% if is_own_profile %}
+                                            <div class="post-management">
+                                                <a href="{% url 'post_detail' post.id %}" class="btn btn-sm btn-outline-info me-1" title="View Post">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'edit_post' post.id %}" class="btn btn-sm btn-outline-warning me-1" title="Edit Post">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <form method="post" action="{% url 'delete_post' post.id %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this post? This action cannot be undone.');">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Post">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        {% else %}
+                                            <a href="{% url 'post_detail' post.id %}" class="btn btn-sm btn-outline-info" title="View Post">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-posts">
+                    <i class="fas fa-camera"></i>
+                    <h4>No posts yet</h4>
+                    <p>{% if is_own_profile %}Start sharing your moments with the world!{% else %}{{ profile_user.username }} hasn't posted anything yet.{% endif %}</p>
+                    {% if is_own_profile %}
+                        <button class="btn btn-primary mt-3">
+                            <i class="fas fa-plus me-2"></i>Create Your First Post
+                        </button>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <!-- Private Account Message -->
+        <div class="private-account">
+            <i class="fas fa-lock"></i>
+            <h3>This Account is Private</h3>
+            <p>Follow {{ profile_user.username }} to see their posts and activity.</p>
+            <form method="post" action="{% url 'follow_user' profile_user.username %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-user-plus me-2"></i>Follow
+                </button>
+            </form>
+        </div>
+    {% endif %}
+    
+    <!-- Debug Section (for development) - Remove in production -->
+    {% if request.user.is_superuser %}
+    <div class="container mt-4">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-bug me-2"></i>Debug Info (Superuser Only)</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>User Information:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Username:</strong> {{ profile_user.username }}</li>
+                            <li><strong>First Name:</strong> {{ profile_user.first_name|default:"Not set" }}</li>
+                            <li><strong>Last Name:</strong> {{ profile_user.last_name|default:"Not set" }}</li>
+                            <li><strong>Email:</strong> {{ profile_user.email|default:"Not set" }}</li>
+                            <li><strong>Date Joined:</strong> {{ profile_user.date_joined }}</li>
+                            <li><strong>Last Login:</strong> {{ profile_user.last_login|default:"Never" }}</li>
+                            <li><strong>Is Active:</strong> {{ profile_user.is_active }}</li>
+                            <li><strong>Is Staff:</strong> {{ profile_user.is_staff }}</li>
+                            <li><strong>Is Superuser:</strong> {{ profile_user.is_superuser }}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Owner Profile Information:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Bio:</strong> {{ owner.bio|default:"Not set" }}</li>
+                            <li><strong>Location:</strong> {{ owner.location|default:"Not set" }}</li>
+                            <li><strong>Website:</strong> {{ owner.website|default:"Not set" }}</li>
+                            <li><strong>Phone:</strong> {{ owner.phone_number|default:"Not set" }}</li>
+                            <li><strong>Date of Birth:</strong> {{ owner.date_of_birth|default:"Not set" }}</li>
+                            <li><strong>Profile Picture:</strong> {{ owner.profile_picture|default:"Not set" }}</li>
+                            <li><strong>Cover Photo:</strong> {{ owner.cover_photo|default:"Not set" }}</li>
+                            <li><strong>Is Verified:</strong> {{ owner.is_verified }}</li>
+                            <li><strong>Is Private:</strong> {{ owner.is_private }}</li>
+                            <li><strong>Created At:</strong> {{ owner.created_at }}</li>
+                            <li><strong>Updated At:</strong> {{ owner.updated_at }}</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Statistics:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Posts Count:</strong> {{ post_count }}</li>
+                            <li><strong>Followers Count:</strong> {{ followers_count }}</li>
+                            <li><strong>Following Count:</strong> {{ following_count }}</li>
+                            <li><strong>Is Own Profile:</strong> {{ is_own_profile }}</li>
+                            <li><strong>Is Following:</strong> {{ is_following }}</li>
+                            <li><strong>Follow Status:</strong> {{ follow_status|default:"None" }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+
+{% endblock %}

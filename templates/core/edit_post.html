@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Post - Barta 2.0{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-post-container {
+        max-width: 600px;
+        margin: 2rem auto;
+    }
+    
+    .edit-post-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: var(--shadow);
+        border: 1px solid #e9ecef;
+    }
+    
+    .user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    
+    .post-textarea {
+        border: none;
+        resize: none;
+        font-size: 1.1rem;
+        line-height: 1.5;
+        min-height: 150px;
+    }
+    
+    .post-textarea:focus {
+        outline: none;
+        box-shadow: none;
+    }
+    
+    .current-image {
+        max-width: 200px;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="edit-post-container">
+        <div class="edit-post-card">
+            <div class="d-flex align-items-center mb-3">
+                <div class="user-avatar me-3">
+                    {% if user.owner.profile_picture %}
+                        <img src="{{ user.owner.profile_picture.url }}" alt="Profile" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                    {% else %}
+                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                    {% endif %}
+                </div>
+                <div>
+                    <h5 class="mb-0">Edit Post</h5>
+                    <small class="text-muted">Update your post content</small>
+                </div>
+            </div>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <textarea 
+                        id="postContent"
+                        name="content" 
+                        class="form-control post-textarea" 
+                        placeholder="What's on your mind?" 
+                        required
+                        maxlength="5000"
+                    >{{ post.content }}</textarea>
+                    <div class="form-text text-end">
+                        Maximum 5000 characters
+                    </div>
+                </div>
+
+                {% if post.image %}
+                <div class="mb-3">
+                    <label class="form-label">Current Image:</label>
+                    <div>
+                        <img src="{{ post.image.url }}" alt="Current post image" class="current-image">
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label for="imageInput" class="form-label">
+                        {% if post.image %}
+                            Change Image (optional):
+                        {% else %}
+                            Add Image (optional):
+                        {% endif %}
+                    </label>
+                    <input type="file" class="form-control" id="imageInput" name="image" accept="image/*">
+                    <div id="imagePreview" class="mt-3" style="display: none; position: relative;"></div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'post_detail' post.id %}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary" id="updateBtn">
+                        <i class="fas fa-save me-2"></i>Update Post
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editForm = document.querySelector('form');
+    const postContent = document.getElementById('postContent');
+    const imageInput = document.getElementById('imageInput');
+    const imagePreview = document.getElementById('imagePreview');
+    const updateBtn = document.getElementById('updateBtn');
+    
+    // Image upload validation and preview
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        imagePreview.innerHTML = '';
+        
+        if (file) {
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                alert('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
+                this.value = '';
+                return;
+            }
+            
+            // Validate file size (max 5MB)
+            const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+            if (file.size > maxSize) {
+                alert('Image file is too large. Please select a file smaller than 5MB.');
+                this.value = '';
+                return;
+            }
+            
+            // Create preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewHtml = `
+                    <div class="uploaded-image">
+                        <label class="form-label">New Image Preview:</label>
+                        <div>
+                            <img src="${e.target.result}" alt="Preview" style="max-width: 200px; border-radius: 10px;">
+                            <button type="button" class="btn btn-sm btn-danger remove-image" style="position: absolute; top: 25px; right: 10px;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                imagePreview.innerHTML = previewHtml;
+                imagePreview.style.display = 'block';
+                
+                // Add remove functionality
+                const removeBtn = imagePreview.querySelector('.remove-image');
+                removeBtn.addEventListener('click', function() {
+                    imageInput.value = '';
+                    imagePreview.innerHTML = '';
+                    imagePreview.style.display = 'none';
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Form validation before submission
+    editForm.addEventListener('submit', function(e) {
+        const contentValue = postContent.value.trim();
+        
+        // Check if post has content
+        if (!contentValue) {
+            e.preventDefault();
+            alert('Please write something for your post!');
+            postContent.focus();
+            return false;
+        }
+        
+        // Check content length
+        if (contentValue.length > 5000) {
+            e.preventDefault();
+            alert('Post content is too long. Please keep it under 5000 characters.');
+            postContent.focus();
+            return false;
+        }
+        
+        // Disable submit button to prevent double submission
+        updateBtn.disabled = true;
+        updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
+        
+        return true;
+    });
+    
+    // Character counter for post content
+    postContent.addEventListener('input', function() {
+        const currentLength = this.value.length;
+        const maxLength = 5000;
+        
+        // Create or update character counter
+        let counter = document.getElementById('charCounter');
+        if (!counter) {
+            counter = document.createElement('div');
+            counter.id = 'charCounter';
+            counter.className = 'text-muted small mt-1';
+            postContent.parentNode.appendChild(counter);
+        }
+        
+        counter.textContent = `${currentLength}/${maxLength} characters`;
+        
+        // Change color if approaching limit
+        if (currentLength > maxLength * 0.9) {
+            counter.className = 'text-warning small mt-1';
+        } else if (currentLength > maxLength * 0.8) {
+            counter.className = 'text-info small mt-1';
+        } else {
+            counter.className = 'text-muted small mt-1';
+        }
+    });
+    
+    // Auto-resize textarea
+    postContent.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+    
+    // Initialize character counter
+    if (postContent.value) {
+        postContent.dispatchEvent(new Event('input'));
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,500 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Post - Barta 2.0{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-post-container {
+        max-width: 600px;
+        margin: 2rem auto;
+    }
+    
+    .create-post-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: var(--shadow);
+        border: 1px solid #e9ecef;
+    }
+    
+    .user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    
+    .post-textarea {
+        border: none;
+        resize: none;
+        font-size: 1.1rem;
+        line-height: 1.5;
+        min-height: 150px;
+    }
+    
+    .post-textarea:focus {
+        outline: none;
+        box-shadow: none;
+    }
+    
+    .upload-area {
+        border: 2px dashed #e9ecef;
+        border-radius: 10px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .upload-area:hover {
+        border-color: var(--primary-color);
+        background: #f8f9fa;
+    }
+    
+    .upload-area.dragover {
+        border-color: var(--primary-color);
+        background: var(--primary-color-light);
+    }
+    
+    .image-preview {
+        position: relative;
+        display: inline-block;
+        margin: 0.5rem;
+    }
+    
+    .image-preview img {
+        max-width: 150px;
+        max-height: 150px;
+        border-radius: 10px;
+        object-fit: cover;
+    }
+    
+    .remove-image {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+    
+    .post-options {
+        border-top: 1px solid #e9ecef;
+        padding-top: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .option-btn {
+        border: none;
+        background: transparent;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+        margin-right: 0.5rem;
+    }
+    
+    .option-btn:hover {
+        background: #f8f9fa;
+    }
+    
+    .option-btn.active {
+        background: var(--primary-color);
+        color: white;
+    }
+    
+    .emoji-picker {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: var(--shadow);
+        z-index: 1000;
+        max-width: 300px;
+    }
+    
+    .emoji-picker.show {
+        display: block;
+    }
+    
+    .emoji {
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 5px;
+        transition: background 0.2s ease;
+    }
+    
+    .emoji:hover {
+        background: #f8f9fa;
+    }
+    
+    @media (max-width: 768px) {
+        .create-post-container {
+            margin: 1rem;
+        }
+        
+        .create-post-card {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="create-post-container">
+        <div class="create-post-card">
+            <div class="d-flex align-items-center mb-3">
+                <div class="user-avatar me-3">
+                    {% if user.owner.profile_picture %}
+                        <img src="{{ user.owner.profile_picture.url }}" alt="Profile" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                    {% else %}
+                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                    {% endif %}
+                </div>
+                <div>
+                    <h5 class="mb-0">{{ user.first_name }} {{ user.last_name }}</h5>
+                    <small class="text-muted">Create a new post</small>
+                </div>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" id="postForm">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <textarea 
+                        id="postContent"
+                        name="content" 
+                        class="form-control post-textarea" 
+                        placeholder="What's on your mind, {{ user.first_name }}?" 
+                        required
+                        maxlength="5000"
+                    ></textarea>
+                    <div class="form-text text-end">
+                        Maximum 5000 characters
+                    </div>
+                </div>
+
+                <!-- Image Upload Section -->
+                <div class="mb-3" id="imageUploadSection">
+                    <label for="imageInput" class="upload-area" style="cursor: pointer;">
+                        <i class="fas fa-camera" style="font-size: 2rem; color: #6c757d; margin-bottom: 1rem;"></i>
+                        <p class="mb-0">Click to upload photos or drag & drop</p>
+                        <small class="text-muted">Support JPG, PNG, GIF, WebP up to 5MB</small>
+                    </label>
+                    <input type="file" id="imageInput" name="image" accept="image/*" style="display: none;">
+                    <div id="imagePreview" class="mt-3" style="display: none; position: relative;"></div>
+                </div>
+
+                <!-- Post Options -->
+                <div class="post-options">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="post-actions">
+                            <label for="imageInput" class="option-btn" style="cursor: pointer;">
+                                <i class="fas fa-image text-success me-2"></i>Photo
+                            </label>
+                            
+                            <button type="button" class="option-btn" id="feelingBtn">
+                                <i class="fas fa-smile text-warning me-2"></i>Feeling
+                            </button>
+                            
+                            <button type="button" class="option-btn">
+                                <i class="fas fa-map-marker-alt text-danger me-2"></i>Location
+                            </button>
+                        </div>
+
+                        <div class="publish-actions">
+                            <a href="{% url 'home' %}" class="btn btn-outline-secondary me-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary" id="publishBtn">
+                                <i class="fas fa-paper-plane me-2"></i>Publish Post
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Emoji Picker -->
+                    <div class="emoji-picker" id="emojiPicker" style="position: relative;">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong>How are you feeling?</strong>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="clearFeelingBtn">
+                                <i class="fas fa-times me-1"></i>Remove
+                            </button>
+                        </div>
+                        <div class="emoji-grid">
+                            <span class="emoji" data-emoji="😀">😀 Happy</span>
+                            <span class="emoji" data-emoji="😍">😍 Love</span>
+                            <span class="emoji" data-emoji="😎">😎 Cool</span>
+                            <span class="emoji" data-emoji="😴">😴 Sleepy</span>
+                            <span class="emoji" data-emoji="🤔">🤔 Thinking</span>
+                            <span class="emoji" data-emoji="😂">😂 Laughing</span>
+                            <span class="emoji" data-emoji="🥳">🥳 Celebrating</span>
+                            <span class="emoji" data-emoji="😭">😭 Sad</span>
+                            <span class="emoji" data-emoji="😱">😱 Shocked</span>
+                            <span class="emoji" data-emoji="🤗">🤗 Grateful</span>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form elements
+    const postForm = document.getElementById('postForm');
+    const postContent = document.getElementById('postContent');
+    const imageInput = document.getElementById('imageInput');
+    const imagePreview = document.getElementById('imagePreview');
+    const publishBtn = document.getElementById('publishBtn');
+    const feelingBtn = document.getElementById('feelingBtn');
+    const emojiPicker = document.getElementById('emojiPicker');
+    
+    // Image upload validation and preview
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        imagePreview.innerHTML = '';
+        
+        if (file) {
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                alert('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
+                this.value = '';
+                return;
+            }
+            
+            // Validate file size (max 5MB)
+            const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+            if (file.size > maxSize) {
+                alert('Image file is too large. Please select a file smaller than 5MB.');
+                this.value = '';
+                return;
+            }
+            
+            // Create preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewHtml = `
+                    <div class="uploaded-image">
+                        <img src="${e.target.result}" alt="Preview" style="max-width: 100%; max-height: 300px; border-radius: 10px;">
+                        <button type="button" class="btn btn-sm btn-danger remove-image" style="position: absolute; top: 10px; right: 10px;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                imagePreview.innerHTML = previewHtml;
+                imagePreview.style.display = 'block';
+                
+                // Add remove functionality
+                const removeBtn = imagePreview.querySelector('.remove-image');
+                removeBtn.addEventListener('click', function() {
+                    imageInput.value = '';
+                    imagePreview.innerHTML = '';
+                    imagePreview.style.display = 'none';
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Emoji/Feeling picker functionality
+    feelingBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Toggle emoji picker visibility
+        if (emojiPicker.style.display === 'none' || emojiPicker.style.display === '') {
+            emojiPicker.style.display = 'block';
+            feelingBtn.classList.add('active');
+        } else {
+            emojiPicker.style.display = 'none';
+            feelingBtn.classList.remove('active');
+        }
+    });
+    
+    // Handle emoji selection
+    const emojiElements = emojiPicker.querySelectorAll('.emoji');
+    emojiElements.forEach(emoji => {
+        emoji.addEventListener('click', function() {
+            const emojiData = this.getAttribute('data-emoji');
+            const emojiText = this.textContent;
+            
+            // Add emoji to the beginning of post content
+            const currentContent = postContent.value;
+            const emojiPrefix = emojiData + ' ';
+            
+            // Check if there's already an emoji at the beginning
+            const existingEmoji = currentContent.match(/^[\u{1F600}-\u{1F64F}]|^[\u{1F300}-\u{1F5FF}]|^[\u{1F680}-\u{1F6FF}]|^[\u{1F1E0}-\u{1F1FF}]|^[\u{2600}-\u{26FF}]|^[\u{2700}-\u{27BF}]/u);
+            
+            if (existingEmoji) {
+                // Replace existing emoji with new one
+                postContent.value = emojiPrefix + currentContent.substring(existingEmoji[0].length).trim();
+            } else {
+                // Add emoji at the beginning
+                postContent.value = emojiPrefix + currentContent;
+            }
+            
+            // Update feeling button
+            feelingBtn.innerHTML = `<i class="fas fa-smile me-2"></i>${emojiText}`;
+            feelingBtn.classList.add('active');
+            
+            // Hide emoji picker
+            emojiPicker.style.display = 'none';
+            
+            // Focus back to textarea and position cursor after emoji
+            postContent.focus();
+            postContent.setSelectionRange(emojiPrefix.length, emojiPrefix.length);
+            
+            // Trigger input event to update character counter
+            postContent.dispatchEvent(new Event('input'));
+        });
+    });
+    
+    // Clear feeling functionality
+    const clearFeelingBtn = document.getElementById('clearFeelingBtn');
+    clearFeelingBtn.addEventListener('click', function() {
+        const currentContent = postContent.value;
+        
+        // Remove emoji from the beginning if it exists
+        const emojiRegex = /^[\u{1F600}-\u{1F64F}]|^[\u{1F300}-\u{1F5FF}]|^[\u{1F680}-\u{1F6FF}]|^[\u{1F1E0}-\u{1F1FF}]|^[\u{2600}-\u{26FF}]|^[\u{2700}-\u{27BF}]/u;
+        const match = currentContent.match(emojiRegex);
+        
+        if (match) {
+            postContent.value = currentContent.substring(match[0].length).trim();
+            postContent.dispatchEvent(new Event('input'));
+        }
+        
+        // Reset feeling button
+        feelingBtn.innerHTML = '<i class="fas fa-smile text-warning me-2"></i>Feeling';
+        feelingBtn.classList.remove('active');
+        
+        // Hide emoji picker
+        emojiPicker.style.display = 'none';
+        
+        // Focus back to textarea
+        postContent.focus();
+    });
+    
+    // Close emoji picker when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!feelingBtn.contains(e.target) && !emojiPicker.contains(e.target)) {
+            emojiPicker.style.display = 'none';
+            feelingBtn.classList.remove('active');
+        }
+    });
+    
+    // Form validation before submission
+    postForm.addEventListener('submit', function(e) {
+        const contentValue = postContent.value.trim();
+        const hasImage = imageInput.files.length > 0;
+        
+        // Check if post has content or image
+        if (!contentValue && !hasImage) {
+            e.preventDefault();
+            alert('Please write something or add an image to your post!');
+            postContent.focus();
+            return false;
+        }
+        
+        // Check content length (optional - you can adjust this)
+        if (contentValue.length > 5000) {
+            e.preventDefault();
+            alert('Post content is too long. Please keep it under 5000 characters.');
+            postContent.focus();
+            return false;
+        }
+        
+        // Disable submit button to prevent double submission
+        publishBtn.disabled = true;
+        publishBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Publishing...';
+        
+        return true;
+    });
+    
+    // Character counter for post content
+    postContent.addEventListener('input', function() {
+        const currentLength = this.value.length;
+        const maxLength = 5000;
+        
+        // Create or update character counter
+        let counter = document.getElementById('charCounter');
+        if (!counter) {
+            counter = document.createElement('div');
+            counter.id = 'charCounter';
+            counter.className = 'text-muted small mt-1';
+            postContent.parentNode.appendChild(counter);
+        }
+        
+        counter.textContent = `${currentLength}/${maxLength} characters`;
+        
+        // Change color if approaching limit
+        if (currentLength > maxLength * 0.9) {
+            counter.className = 'text-warning small mt-1';
+        } else if (currentLength > maxLength * 0.8) {
+            counter.className = 'text-info small mt-1';
+        } else {
+            counter.className = 'text-muted small mt-1';
+        }
+    });
+    
+    // Auto-resize textarea
+    postContent.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+    
+    // Image upload area drag and drop functionality
+    const uploadArea = document.querySelector('.upload-area');
+    if (uploadArea) {
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#007bff';
+            this.style.backgroundColor = '#f8f9ff';
+        });
+        
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#e9ecef';
+            this.style.backgroundColor = '';
+        });
+        
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#e9ecef';
+            this.style.backgroundColor = '';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                imageInput.files = files;
+                imageInput.dispatchEvent(new Event('change'));
+            }
+        });
+    }
+    
+    // Initialize character counter
+    if (postContent.value) {
+        postContent.dispatchEvent(new Event('input'));
+    }
+});
+</script>
+{% endblock %}

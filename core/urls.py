@@ -1,0 +1,32 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.home, name='home'),
+    path('signup/', views.signup_view, name='signup'),
+    path('signin/', views.signin_view, name='signin'),
+    path('logout/', views.logout_view, name='logout'),
+    path('messages/', views.messages_view, name='messages'),
+    path('inbox/', views.inbox_view, name='inbox'),
+    path('conversation/<str:username>/', views.conversation_view, name='conversation'),
+    path('start-chat/<str:username>/', views.start_chat_view, name='start_chat'),
+    path('notifications/', views.notifications_view, name='notifications'),
+    path('notifications/mark-read/<int:notification_id>/', views.mark_notification_read, name='mark_notification_read'),
+    path('notifications/mark-all-read/', views.mark_all_notifications_read, name='mark_all_notifications_read'),
+    path('friends/', views.friends_view, name='friends'),
+    path('find-friends/', views.find_friend, name='find_friend'),
+    path('profile/', views.profile_view, name='profile'),
+    path('profile/edit/', views.profile_edit, name='profile_edit'),
+    path('profile/<str:username>/', views.profile_view, name='profile_user'),
+    path('profile/<str:username>/followers/', views.followers_list, name='followers_list'),
+    path('profile/<str:username>/following/', views.following_list, name='following_list'),
+    path('create-post/', views.create_post, name='create_post'),
+    path('post/<int:post_id>/', views.post_detail, name='post_detail'),
+    path('post/<int:post_id>/edit/', views.edit_post, name='edit_post'),
+    path('post/<int:post_id>/delete/', views.delete_post, name='delete_post'),
+    path('post/<int:post_id>/like/', views.like_post, name='like_post'),
+    path('post/<int:post_id>/comment/', views.comment_post, name='comment_post'),
+    path('post/<int:post_id>/comment/<int:comment_id>/reply/', views.reply_comment, name='reply_comment'),
+    path('follow/<str:username>/', views.follow_user, name='follow_user'),
+    path('remove-follower/<str:username>/', views.remove_follower, name='remove_follower'),
+]

@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if is_own_profile %}
+        Following - Barta 2.0
+    {% else %}
+        {{ profile_user.first_name }} Following - Barta 2.0
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .following-container {
+        max-width: 600px;
+        margin: 2rem auto;
+    }
+    
+    .following-header {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow);
+        border: 1px solid #e9ecef;
+        text-align: center;
+    }
+    
+    .user-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 2rem;
+        margin: 0 auto 1rem;
+    }
+    
+    .following-list {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        border: 1px solid #e9ecef;
+    }
+    
+    .following-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid #f8f9fa;
+        transition: background 0.3s ease;
+    }
+    
+    .following-item:last-child {
+        border-bottom: none;
+    }
+    
+    .following-item:hover {
+        background: #f8f9fa;
+        border-radius: 10px;
+        margin: 0 -0.5rem;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+    
+    .following-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        margin-right: 1rem;
+    }
+    
+    .following-info {
+        flex-grow: 1;
+    }
+    
+    .following-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    
+    .following-username {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .unfollow-btn {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 25px;
+        padding: 0.5rem 1.5rem;
+        color: #6c757d;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .unfollow-btn:hover {
+        background: #dc3545;
+        border-color: #dc3545;
+        color: white;
+    }
+    
+    .follow-btn {
+        background: var(--gradient);
+        border: none;
+        border-radius: 25px;
+        padding: 0.5rem 1.5rem;
+        color: white;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .follow-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+    
+    .back-button {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 25px;
+        padding: 0.5rem 1.5rem;
+        color: #6c757d;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .back-button:hover {
+        background: #f8f9fa;
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: #e9ecef;
+        margin-bottom: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .following-container {
+            margin: 1rem;
+        }
+        
+        .following-header, .following-list {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="following-container">
+        <!-- Back Button -->
+        <a href="{% url 'profile_user' profile_user.username %}" class="back-button">
+            <i class="fas fa-arrow-left me-2"></i>Back to Profile
+        </a>
+        
+        <!-- Header -->
+        <div class="following-header">
+            <div class="user-avatar">
+                {% if owner.profile_picture %}
+                    <img src="{{ owner.profile_picture.url }}" alt="Profile" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
+                {% else %}
+                    {{ profile_user.first_name|first|upper }}{{ profile_user.last_name|first|upper }}
+                {% endif %}
+            </div>
+            <h3>
+                {% if is_own_profile %}
+                    Following
+                {% else %}
+                    {{ profile_user.first_name }} Following
+                {% endif %}
+            </h3>
+            <p class="text-muted mb-0">{{ following_count }} following</p>
+        </div>
+        
+        <!-- Following List -->
+        <div class="following-list">
+            {% if following %}
+                {% for follow in following %}
+                <div class="following-item">
+                    <div class="following-avatar">
+                        {% if follow.following.profile_picture %}
+                            <img src="{{ follow.following.profile_picture.url }}" alt="Profile" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                        {% else %}
+                            {{ follow.following.user.first_name|first|upper }}{{ follow.following.user.last_name|first|upper }}
+                        {% endif %}
+                    </div>
+                    <div class="following-info">
+                        <div class="following-name">
+                            <a href="{% url 'profile_user' follow.following.user.username %}" class="text-decoration-none text-dark">
+                                {{ follow.following.user.first_name }} {{ follow.following.user.last_name }}
+                            </a>
+                        </div>
+                        <div class="following-username">@{{ follow.following.user.username }}</div>
+                        {% if follow.following.bio %}
+                        <div class="following-bio text-muted mt-1" style="font-size: 0.85rem;">
+                            {{ follow.following.bio|truncatewords:10 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% if user.is_authenticated and follow.following.user != user %}
+                    <div class="following-actions">
+                        {% if is_own_profile %}
+                        <form action="{% url 'follow_user' follow.following.user.username %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn unfollow-btn">
+                                <i class="fas fa-user-times me-1"></i>Unfollow
+                            </button>
+                        </form>
+                        {% else %}
+                        <form action="{% url 'follow_user' follow.following.user.username %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            {% if user.owner in follow.following.followers.all %}
+                                <button type="submit" class="btn unfollow-btn">
+                                    <i class="fas fa-user-check me-1"></i>Following
+                                </button>
+                            {% else %}
+                                <button type="submit" class="btn follow-btn">
+                                    <i class="fas fa-user-plus me-1"></i>Follow
+                                </button>
+                            {% endif %}
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <h5>Not following anyone yet</h5>
+                    <p class="text-muted">
+                        {% if is_own_profile %}
+                            Discover people to follow and build your network!
+                        {% else %}
+                            {{ profile_user.first_name }} isn't following anyone yet.
+                        {% endif %}
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

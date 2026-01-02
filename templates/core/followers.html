@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if is_own_profile %}
+        Your Followers - Barta 2.0
+    {% else %}
+        {{ profile_user.first_name }}'s Followers - Barta 2.0
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .followers-container {
+        max-width: 600px;
+        margin: 2rem auto;
+    }
+    
+    .followers-header {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow);
+        border: 1px solid #e9ecef;
+        text-align: center;
+    }
+    
+    .user-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 2rem;
+        margin: 0 auto 1rem;
+    }
+    
+    .followers-list {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        border: 1px solid #e9ecef;
+    }
+    
+    .follower-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid #f8f9fa;
+        transition: background 0.3s ease;
+    }
+    
+    .follower-item:last-child {
+        border-bottom: none;
+    }
+    
+    .follower-item:hover {
+        background: #f8f9fa;
+        border-radius: 10px;
+        margin: 0 -0.5rem;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+    
+    .follower-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        margin-right: 1rem;
+    }
+    
+    .follower-info {
+        flex-grow: 1;
+    }
+    
+    .follower-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    
+    .follower-username {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .follow-btn {
+        background: var(--gradient);
+        border: none;
+        border-radius: 25px;
+        padding: 0.5rem 1.5rem;
+        color: white;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .follow-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+    
+    .following-btn {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        color: #6c757d;
+    }
+    
+    .following-btn:hover {
+        background: #e9ecef;
+        color: #495057;
+    }
+    
+    .back-button {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 25px;
+        padding: 0.5rem 1.5rem;
+        color: #6c757d;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .back-button:hover {
+        background: #f8f9fa;
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: #e9ecef;
+        margin-bottom: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .followers-container {
+            margin: 1rem;
+        }
+        
+        .followers-header, .followers-list {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="followers-container">
+        <!-- Back Button -->
+        <a href="{% url 'profile_user' profile_user.username %}" class="back-button">
+            <i class="fas fa-arrow-left me-2"></i>Back to Profile
+        </a>
+        
+        <!-- Header -->
+        <div class="followers-header">
+            <div class="user-avatar">
+                {% if owner.profile_picture %}
+                    <img src="{{ owner.profile_picture.url }}" alt="Profile" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
+                {% else %}
+                    {{ profile_user.first_name|first|upper }}{{ profile_user.last_name|first|upper }}
+                {% endif %}
+            </div>
+            <h3>
+                {% if is_own_profile %}
+                    Your Followers
+                {% else %}
+                    {{ profile_user.first_name }}'s Followers
+                {% endif %}
+            </h3>
+            <p class="text-muted mb-0">{{ followers_count }} follower{{ followers_count|pluralize }}</p>
+        </div>
+        
+        <!-- Followers List -->
+        <div class="followers-list">
+            {% if followers %}
+                {% for follow in followers %}
+                <div class="follower-item">
+                    <div class="follower-avatar">
+                        {% if follow.follower.profile_picture %}
+                            <img src="{{ follow.follower.profile_picture.url }}" alt="Profile" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                        {% else %}
+                            {{ follow.follower.user.first_name|first|upper }}{{ follow.follower.user.last_name|first|upper }}
+                        {% endif %}
+                    </div>
+                    <div class="follower-info">
+                        <div class="follower-name">
+                            <a href="{% url 'profile_user' follow.follower.user.username %}" class="text-decoration-none text-dark">
+                                {{ follow.follower.user.first_name }} {{ follow.follower.user.last_name }}
+                            </a>
+                        </div>
+                        <div class="follower-username">@{{ follow.follower.user.username }}</div>
+                        {% if follow.follower.bio %}
+                        <div class="follower-bio text-muted mt-1" style="font-size: 0.85rem;">
+                            {{ follow.follower.bio|truncatewords:10 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% if user.is_authenticated and follow.follower.user != user %}
+                    <div class="follower-actions">
+                        {% if is_own_profile %}
+                            <!-- Remove follower button for own profile -->
+                            <form method="post" action="{% url 'remove_follower' follow.follower.user.username %}" class="d-inline" onsubmit="return confirm('Are you sure you want to remove {{ follow.follower.user.first_name }} {{ follow.follower.user.last_name }} from your followers?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger btn-sm me-2" title="Remove Follower">
+                                    <i class="fas fa-user-times"></i>
+                                </button>
+                            </form>
+                        {% endif %}
+                        
+                        <form action="{% url 'follow_user' follow.follower.user.username %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            {% if user.owner in follow.follower.followers.all %}
+                                <button type="submit" class="btn follow-btn following-btn">
+                                    <i class="fas fa-user-check me-1"></i>Following
+                                </button>
+                            {% else %}
+                                <button type="submit" class="btn follow-btn">
+                                    <i class="fas fa-user-plus me-1"></i>Follow
+                                </button>
+                            {% endif %}
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h5>No followers yet</h5>
+                    <p class="text-muted">
+                        {% if is_own_profile %}
+                            Share your profile to get followers!
+                        {% else %}
+                            {{ profile_user.first_name }} doesn't have any followers yet.
+                        {% endif %}
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

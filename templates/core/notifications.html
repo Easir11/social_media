@@ -1,0 +1,397 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notifications - Barta 2.0{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notifications-container {
+        max-width: 800px;
+        margin: 2rem auto;
+    }
+    
+    .notifications-header {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow);
+        border: 1px solid #e9ecef;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+    
+    .notifications-list {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        border: 1px solid #e9ecef;
+    }
+    
+    .notification-item {
+        display: flex;
+        align-items: start;
+        padding: 1rem 0;
+        border-bottom: 1px solid #f8f9fa;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .notification-item:last-child {
+        border-bottom: none;
+    }
+    
+    .notification-item.unread {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+        border-left: 4px solid var(--primary-color);
+        padding-left: 1.5rem;
+        margin: 0 -1rem;
+        border-radius: 10px;
+    }
+    
+    .notification-item:hover {
+        background: #f8f9fa;
+        border-radius: 10px;
+        margin: 0 -0.5rem;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+    
+    .notification-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        margin-right: 1rem;
+    }
+    
+    .notification-content {
+        flex-grow: 1;
+    }
+    
+    .notification-text {
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        line-height: 1.5;
+    }
+    
+    .notification-time {
+        color: #6c757d;
+        font-size: 0.85rem;
+    }
+    
+    .notification-icon {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        color: white;
+    }
+    
+    .notification-like {
+        background: #dc3545;
+    }
+    
+    .notification-comment {
+        background: #007bff;
+    }
+    
+    .notification-follow {
+        background: #28a745;
+    }
+    
+    .notification-message {
+        background: #17a2b8;
+    }
+    
+    .notification-actions {
+        margin-top: 0.5rem;
+    }
+    
+    .mark-read-btn {
+        background: transparent;
+        border: 1px solid #e9ecef;
+        color: #6c757d;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+    }
+    
+    .mark-read-btn:hover {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+    
+    .mark-all-read-btn {
+        background: var(--gradient);
+        border: none;
+        color: white;
+        padding: 0.5rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .mark-all-read-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .filter-tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .filter-tab {
+        padding: 0.5rem 1rem;
+        border: 1px solid #e9ecef;
+        background: white;
+        border-radius: 25px;
+        text-decoration: none;
+        color: #6c757d;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-tab.active {
+        background: var(--gradient);
+        border-color: transparent;
+        color: white;
+    }
+    
+    .filter-tab:hover {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: #e9ecef;
+        margin-bottom: 1rem;
+    }
+    
+    .unread-badge {
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 8px;
+        height: 8px;
+        position: absolute;
+        top: 0.5rem;
+        left: 0.5rem;
+    }
+    
+    @media (max-width: 768px) {
+        .notifications-container {
+            margin: 1rem;
+        }
+        
+        .notifications-header, .notifications-list {
+            padding: 1.5rem;
+        }
+        
+        .filter-tabs {
+            flex-wrap: wrap;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="notifications-container">
+        <!-- Header -->
+        <div class="notifications-header">
+            <div>
+                <h3><i class="fas fa-bell me-2"></i>Notifications</h3>
+                <p class="text-muted mb-0">Stay updated with your latest activities</p>
+            </div>
+            {% if unread_count > 0 %}
+            <form action="{% url 'mark_all_notifications_read' %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn mark-all-read-btn">
+                    <i class="fas fa-check-double me-1"></i>Mark All Read
+                </button>
+            </form>
+            {% endif %}
+        </div>
+        
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+            <a href="{% url 'notifications' %}" class="filter-tab {% if not filter_type %}active{% endif %}">
+                All ({{ total_count }})
+            </a>
+            <a href="{% url 'notifications' %}?filter=unread" class="filter-tab {% if filter_type == 'unread' %}active{% endif %}">
+                Unread ({{ unread_count }})
+            </a>
+            <a href="{% url 'notifications' %}?filter=likes" class="filter-tab {% if filter_type == 'likes' %}active{% endif %}">
+                Likes
+            </a>
+            <a href="{% url 'notifications' %}?filter=comments" class="filter-tab {% if filter_type == 'comments' %}active{% endif %}">
+                Comments
+            </a>
+            <a href="{% url 'notifications' %}?filter=follows" class="filter-tab {% if filter_type == 'follows' %}active{% endif %}">
+                Follows
+            </a>
+        </div>
+        
+        <!-- Notifications List -->
+        <div class="notifications-list">
+            {% if notifications %}
+                {% for notification in notifications %}
+                <div class="notification-item {% if not notification.is_read %}unread{% endif %}">
+                    {% if not notification.is_read %}
+                    <div class="unread-badge"></div>
+                    {% endif %}
+                    
+                    <div class="notification-avatar">
+                        {% if notification.sender and notification.sender.profile_picture %}
+                            <img src="{{ notification.sender.profile_picture.url }}" alt="Profile" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                        {% elif notification.sender %}
+                            {{ notification.sender.user.first_name|first|upper }}{{ notification.sender.user.last_name|first|upper }}
+                        {% else %}
+                            <i class="fas fa-bell"></i>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="notification-content">
+                        <div class="notification-text">
+                            {{ notification.content }}
+                        </div>
+                        <div class="notification-time">
+                            <i class="fas fa-clock me-1"></i>{{ notification.created_at|timesince }} ago
+                        </div>
+                        
+                        {% if not notification.is_read %}
+                        <div class="notification-actions">
+                            <form action="{% url 'mark_notification_read' notification.id %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn mark-read-btn">
+                                    <i class="fas fa-check me-1"></i>Mark as read
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Notification Type Icon -->
+                    {% if 'liked' in notification.content %}
+                    <div class="notification-icon notification-like">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    {% elif 'commented' in notification.content %}
+                    <div class="notification-icon notification-comment">
+                        <i class="fas fa-comment"></i>
+                    </div>
+                    {% elif 'following' in notification.content %}
+                    <div class="notification-icon notification-follow">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    {% elif 'message' in notification.content %}
+                    <div class="notification-icon notification-message">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Quick Actions -->
+                    {% if notification.related_post %}
+                    <div class="notification-quick-actions">
+                        <a href="{% url 'post_detail' notification.related_post.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i>View Post
+                        </a>
+                    </div>
+                    {% elif notification.sender %}
+                    <div class="notification-quick-actions">
+                        <a href="{% url 'profile_user' notification.sender.user.username %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-user me-1"></i>View Profile
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <div class="pagination-container mt-4">
+                    <nav aria-label="Notifications pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if filter_type %}&filter={{ filter_type }}{% endif %}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if filter_type %}&filter={{ filter_type }}{% endif %}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if filter_type %}&filter={{ filter_type }}{% endif %}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+                
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-bell-slash"></i>
+                    </div>
+                    <h5>No notifications</h5>
+                    <p class="text-muted">
+                        {% if filter_type == 'unread' %}
+                            You have no unread notifications.
+                        {% elif filter_type %}
+                            No {{ filter_type }} notifications found.
+                        {% else %}
+                            You don't have any notifications yet. Start interacting with posts to get notifications!
+                        {% endif %}
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

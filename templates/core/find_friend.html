@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+
+{% block title %}Find Friends - Barta 2.0{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-search me-2"></i>Find Friends
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Search Form -->
+                    <form method="GET" class="mb-4">
+                        <div class="input-group">
+                            <input 
+                                type="text" 
+                                name="q" 
+                                class="form-control form-control-lg" 
+                                placeholder="Search for friends by name, username, location, or interests..."
+                                value="{{ query }}"
+                                required
+                            >
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </div>
+                        <small class="text-muted mt-2 d-block">
+                            <i class="fas fa-lightbulb me-1"></i>
+                            Our smart search uses fuzzy matching to find the best matches even with typos!
+                        </small>
+                    </form>
+
+                    {% if query %}
+                        <div class="search-results">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">
+                                    Search Results for "{{ query }}"
+                                </h5>
+                                {% if total_found %}
+                                    <span class="badge bg-info">
+                                        {{ total_found }} match{{ total_found|pluralize:"es" }} found
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            {% if results %}
+                                <div class="row">
+                                    {% for result in results %}
+                                        <div class="col-lg-8 col-md-12 mb-3">
+                                            <div class="card h-100 border-0 shadow-sm">
+                                                <div class="card-body">
+                                                    <div class="d-flex align-items-start">
+                                                        <div class="me-3">
+                                                            {% if result.person.profile_picture %}
+                                                                <img src="{{ result.person.profile_picture.url }}" 
+                                                                     alt="Profile" 
+                                                                     class="rounded-circle" 
+                                                                     width="60" height="60"
+                                                                     style="object-fit: cover;">
+                                                            {% else %}
+                                                                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" 
+                                                                     style="width: 60px; height: 60px;">
+                                                                    <i class="fas fa-user text-white"></i>
+                                                                </div>
+                                                            {% endif %}
+                                                        </div>
+                                                        
+                                                        <div class="flex-grow-1">
+                                                            <div class="d-flex justify-content-between align-items-start">
+                                                                <div>
+                                                                    <h6 class="mb-1">
+                                                                        <a href="{% url 'profile_user' result.person.user.username %}" 
+                                                                           class="text-decoration-none">
+                                                                            {{ result.person.user.first_name }} {{ result.person.user.last_name }}
+                                                                        </a>
+                                                                    </h6>
+                                                                    <p class="text-muted mb-1">@{{ result.person.user.username }}</p>
+                                                                </div>
+                                                                
+                                                                <div class="text-end">
+                                                                    <div class="badge bg-success mb-1">
+                                                                        {{ result.score }}% match
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            {% if result.person.location %}
+                                                                <p class="text-muted mb-1">
+                                                                    <i class="fas fa-map-marker-alt me-1"></i>{{ result.person.location }}
+                                                                </p>
+                                                            {% endif %}
+                                                            
+                                                            {% if result.person.bio %}
+                                                                <p class="text-muted mb-2" style="font-size: 0.9rem;">
+                                                                    {{ result.person.bio|truncatechars:80 }}
+                                                                </p>
+                                                            {% endif %}
+                                                            
+                                                            <!-- Connection Stats -->
+                                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                <small class="text-muted">
+                                                                    <i class="fas fa-users me-1"></i>
+                                                                    {{ result.followers_count }} followers • 
+                                                                    {{ result.following_count }} following
+                                                                </small>
+                                                                
+                                                                {% if result.mutual_connections > 0 %}
+                                                                    <small class="text-info">
+                                                                        <i class="fas fa-user-friends me-1"></i>
+                                                                        {{ result.mutual_connections }} mutual
+                                                                    </small>
+                                                                {% endif %}
+                                                            </div>
+                                                            
+                                                            {% if result.recent_posts > 0 %}
+                                                                <small class="text-success d-block mb-2">
+                                                                    <i class="fas fa-clock me-1"></i>
+                                                                    {{ result.recent_posts }} recent post{{ result.recent_posts|pluralize }}
+                                                                </small>
+                                                            {% endif %}
+                                                            
+                                                            <!-- Action Buttons -->
+                                                            <div class="d-flex gap-2 justify-content-start">
+                                                                <a href="{% url 'profile_user' result.person.user.username %}" 
+                                                                   class="btn btn-outline-primary btn-sm flex-grow-1 btn-compact">
+                                                                    <i class="fas fa-eye me-1"></i>View Profile
+                                                                </a>
+                                                                
+                                                                <form method="POST" action="{% url 'follow_user' result.person.user.username %}" class="d-inline">
+                                                                    {% csrf_token %}
+                                                                    <button type="submit" class="btn btn-primary btn-sm">
+                                                                        <i class="fas fa-user-plus me-1"></i>Follow
+                                                                    </button>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <div class="mb-3">
+                                        <i class="fas fa-search text-muted" style="font-size: 3rem;"></i>
+                                    </div>
+                                    <h5 class="text-muted">No matches found</h5>
+                                    <p class="text-muted">
+                                        Try a different search term or check for typos.<br>
+                                        Our fuzzy search is smart, but it might need a closer match!
+                                    </p>
+                                    <div class="mt-3">
+                                        <small class="text-muted">
+                                            <strong>Search Tips:</strong><br>
+                                            • Try searching by first name, last name, or username<br>
+                                            • Include location or interests from their bio<br>
+                                            • Use partial names - our fuzzy search will find close matches
+                                        </small>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <!-- Welcome Message -->
+                        <div class="text-center py-5">
+                            <div class="mb-4">
+                                <i class="fas fa-users text-primary" style="font-size: 4rem;"></i>
+                            </div>
+                            <h3 class="text-primary mb-3">Discover New Friends</h3>
+                            <p class="text-muted mb-4">
+                                Use our intelligent search to find people you might know or want to connect with.
+                            </p>
+                            
+                            <div class="row justify-content-center">
+                                <div class="col-md-8">
+                                    <div class="card bg-light border-0">
+                                        <div class="card-body">
+                                            <h6 class="text-primary mb-3">
+                                                <i class="fas fa-magic me-2"></i>Smart Search Features
+                                            </h6>
+                                            <div class="row text-start">
+                                                <div class="col-md-6">
+                                                    <ul class="list-unstyled mb-0">
+                                                        <li class="mb-2">
+                                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                                            Fuzzy name matching
+                                                        </li>
+                                                        <li class="mb-2">
+                                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                                            Location-based search
+                                                        </li>
+                                                        <li class="mb-2">
+                                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                                            Interest matching
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <ul class="list-unstyled mb-0">
+                                                        <li class="mb-2">
+                                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                                            Mutual connections
+                                                        </li>
+                                                        <li class="mb-2">
+                                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                                            Activity-based ranking
+                                                        </li>
+                                                        <li class="mb-2">
+                                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                                            Typo-tolerant search
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    transition: transform 0.2s ease-in-out;
+    overflow: visible;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+.btn-sm {
+    font-size: 0.8rem;
+}
+
+.btn-compact {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+.search-results .card {
+    border-left: 4px solid var(--bs-primary);
+}
+
+.match-score-high {
+    background: linear-gradient(90deg, #28a745, #20c997);
+}
+
+.match-score-medium {
+    background: linear-gradient(90deg, #ffc107, #fd7e14);
+}
+
+.match-score-low {
+    background: linear-gradient(90deg, #6c757d, #adb5bd);
+}
+</style>
+{% endblock %}

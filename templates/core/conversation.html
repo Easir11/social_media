@@ -1,0 +1,651 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Chat with {{ partner.user.first_name }} {{ partner.user.last_name }} - Barta 2.0{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        max-width: 900px;
+        margin: 1rem auto;
+        height: calc(100vh - 150px);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chat-header {
+        background: white;
+        border-radius: 15px 15px 0 0;
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        border: 1px solid #e9ecef;
+        border-bottom: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .chat-partner-info {
+        display: flex;
+        align-items: center;
+    }
+    
+    .partner-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.2rem;
+        margin-right: 1rem;
+    }
+    
+    .partner-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    
+    .partner-username {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .chat-messages {
+        flex-grow: 1;
+        background: white;
+        padding: 1.5rem;
+        overflow-y: auto;
+        border-left: 1px solid #e9ecef;
+        border-right: 1px solid #e9ecef;
+        max-height: 500px;
+    }
+    
+    .message {
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: flex-start;
+    }
+    
+    .message.sent {
+        justify-content: flex-end;
+    }
+    
+    .message.received {
+        justify-content: flex-start;
+    }
+    
+    .message-content {
+        max-width: 70%;
+        padding: 1rem 1.5rem;
+        border-radius: 20px;
+        position: relative;
+        word-wrap: break-word;
+    }
+    
+    .message.sent .message-content {
+        background: var(--gradient);
+        color: white;
+        border-bottom-right-radius: 8px;
+    }
+    
+    .message.received .message-content {
+        background: #f8f9fa;
+        color: #333;
+        border-bottom-left-radius: 8px;
+    }
+    
+    .message-time {
+        font-size: 0.75rem;
+        opacity: 0.7;
+        margin-top: 0.5rem;
+        text-align: right;
+    }
+    
+    .message.received .message-time {
+        text-align: left;
+    }
+    
+    .message-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.8rem;
+        margin: 0 0.5rem;
+    }
+    
+    .message.sent .message-avatar {
+        order: 2;
+    }
+    
+    .chat-input {
+        background: white;
+        border-radius: 0 0 15px 15px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        border: 1px solid #e9ecef;
+        border-top: none;
+    }
+    
+    .input-group {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-end;
+    }
+    
+    .message-textarea {
+        flex-grow: 1;
+        border: 1px solid #e9ecef;
+        border-radius: 25px;
+        padding: 1rem 1.5rem;
+        resize: none;
+        min-height: 50px;
+        max-height: 120px;
+        font-size: 1rem;
+        line-height: 1.4;
+    }
+    
+    .message-textarea:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+    }
+    
+    .message-textarea.is-invalid {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+    }
+    
+    .message-textarea.is-invalid:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
+    }
+    
+    .message-textarea.is-invalid {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+        animation: shake 0.5s ease-in-out;
+    }
+    
+    @keyframes shake {
+        0%, 20%, 40%, 60%, 80% {
+            transform: translateX(0);
+        }
+        10%, 30%, 50%, 70%, 90% {
+            transform: translateX(-5px);
+        }
+    }
+    
+    .send-btn {
+        background: var(--gradient);
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        color: white;
+        font-size: 1.2rem;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+    
+    .send-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .send-btn:disabled {
+        background: #e9ecef;
+        color: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .back-button {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 25px;
+        padding: 0.5rem 1rem;
+        color: #6c757d;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .back-button:hover {
+        background: #f8f9fa;
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+    
+    .empty-chat {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: #e9ecef;
+        margin-bottom: 1rem;
+    }
+    
+    .typing-indicator {
+        display: none;
+        padding: 1rem;
+        color: #6c757d;
+        font-style: italic;
+        font-size: 0.9rem;
+    }
+    
+    @media (max-width: 768px) {
+        .chat-container {
+            margin: 0;
+            height: calc(100vh - 120px);
+        }
+        
+        .chat-header {
+            border-radius: 0;
+            padding: 1rem;
+        }
+        
+        .chat-messages {
+            padding: 1rem;
+        }
+        
+        .chat-input {
+            border-radius: 0;
+            padding: 1rem;
+        }
+        
+        .message-content {
+            max-width: 85%;
+        }
+        
+        .partner-avatar {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+    }
+    
+    /* Attachment Styles */
+    .attachment-btn {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-right: 0.5rem;
+        flex-shrink: 0;
+    }
+    
+    .attachment-btn:hover {
+        background: #e9ecef;
+        color: #495057;
+        transform: scale(1.05);
+    }
+    
+    .attachment-preview {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .attachment-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .attachment-info {
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+    }
+    
+    .attachment-info i {
+        color: #6c757d;
+    }
+    
+    .message-attachment {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 0.75rem;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .attachment-download {
+        color: #007bff;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+    }
+    
+    .attachment-download:hover {
+        color: #0056b3;
+        text-decoration: underline;
+    }
+    
+    .attachment-size {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-left: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="chat-container">
+        <!-- Chat Header -->
+        <div class="chat-header">
+            <div class="chat-partner-info">
+                <a href="{% url 'inbox' %}" class="back-button me-3">
+                    <i class="fas fa-arrow-left me-1"></i>
+                </a>
+                <div class="partner-avatar">
+                    {% if partner.profile_picture %}
+                        <img src="{{ partner.profile_picture.url }}" alt="Profile" 
+                             style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                    {% else %}
+                        {{ partner.user.first_name|first|upper }}{{ partner.user.last_name|first|upper }}
+                    {% endif %}
+                </div>
+                <div>
+                    <div class="partner-name">{{ partner.user.first_name }} {{ partner.user.last_name }}</div>
+                    <div class="partner-username">@{{ partner.user.username }}</div>
+                </div>
+            </div>
+            <div class="chat-actions">
+                <a href="{% url 'profile_user' partner.user.username %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-user me-1"></i>View Profile
+                </a>
+            </div>
+        </div>
+        
+        <!-- Chat Messages -->
+        <div class="chat-messages" id="chatMessages">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="message {% if message.sender == current_user_owner %}sent{% else %}received{% endif %}">
+                    {% if message.sender != current_user_owner %}
+                    <div class="message-avatar">
+                        {% if message.sender.profile_picture %}
+                            <img src="{{ message.sender.profile_picture.url }}" alt="Profile" 
+                                 style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+                        {% else %}
+                            {{ message.sender.user.first_name|first|upper }}{{ message.sender.user.last_name|first|upper }}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="message-content">
+                        {% if message.content %}
+                            {{ message.content|linebreaks }}
+                        {% endif %}
+                        
+                        {% if message.attachment %}
+                            <div class="message-attachment">
+                                <a href="{{ message.attachment.url }}" target="_blank" class="attachment-download">
+                                    {% if message.attachment.name|slice:"-4:" == ".jpg" or message.attachment.name|slice:"-5:" == ".jpeg" or message.attachment.name|slice:"-4:" == ".png" or message.attachment.name|slice:"-4:" == ".gif" %}
+                                        <i class="fas fa-image me-2"></i>
+                                    {% elif message.attachment.name|slice:"-4:" == ".pdf" %}
+                                        <i class="fas fa-file-pdf me-2"></i>
+                                    {% elif message.attachment.name|slice:"-4:" == ".doc" or message.attachment.name|slice:"-5:" == ".docx" %}
+                                        <i class="fas fa-file-word me-2"></i>
+                                    {% elif message.attachment.name|slice:"-4:" == ".mp4" %}
+                                        <i class="fas fa-file-video me-2"></i>
+                                    {% elif message.attachment.name|slice:"-4:" == ".mp3" %}
+                                        <i class="fas fa-file-audio me-2"></i>
+                                    {% elif message.attachment.name|slice:"-4:" == ".zip" or message.attachment.name|slice:"-4:" == ".rar" %}
+                                        <i class="fas fa-file-archive me-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-paperclip me-2"></i>
+                                    {% endif %}
+                                    <span>{{ message.attachment.name|truncatechars:30 }}</span>
+                                </a>
+                                <small class="attachment-size">{{ message.attachment.size|filesizeformat }}</small>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="message-time">
+                            {{ message.created_at|date:"M d, g:i A" }}
+                            {% if message.sender == current_user_owner %}
+                                {% if message.is_read %}
+                                    <i class="fas fa-check-double text-light ms-1" title="Read"></i>
+                                {% else %}
+                                    <i class="fas fa-check text-light ms-1" title="Sent"></i>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if message.sender == current_user_owner %}
+                    <div class="message-avatar">
+                        {% if message.sender.profile_picture %}
+                            <img src="{{ message.sender.profile_picture.url }}" alt="Profile" 
+                                 style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+                        {% else %}
+                            {{ message.sender.user.first_name|first|upper }}{{ message.sender.user.last_name|first|upper }}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-chat">
+                    <div class="empty-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h5>No messages yet</h5>
+                    <p>Start the conversation by sending your first message!</p>
+                </div>
+            {% endif %}
+            
+            <!-- Typing Indicator -->
+            <div class="typing-indicator" id="typingIndicator">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                {{ partner.user.first_name }} is typing...
+            </div>
+        </div>
+        
+        <!-- Chat Input -->
+        <div class="chat-input">
+            <form method="post" id="messageForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <!-- File attachment preview -->
+                <div id="attachmentPreview" class="attachment-preview" style="display: none;">
+                    <div class="attachment-item">
+                        <div class="attachment-info">
+                            <i class="fas fa-paperclip me-2"></i>
+                            <span id="attachmentName"></span>
+                            <span id="attachmentSize" class="text-muted ms-2"></span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger" id="removeAttachment">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <!-- Attachment button -->
+                    <label for="attachmentInput" class="attachment-btn" title="Attach file">
+                        <i class="fas fa-paperclip"></i>
+                    </label>
+                    <input type="file" id="attachmentInput" name="attachment" style="display: none;" 
+                           accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.mp4,.mp3,.zip,.rar">
+                    
+                    <textarea 
+                        name="content" 
+                        class="message-textarea" 
+                        placeholder="Type your message..." 
+                        maxlength="1000"
+                        id="messageTextarea"
+                    ></textarea>
+                    <button type="submit" class="send-btn" id="sendBtn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </form>
+            <div class="mt-2">
+                <small class="text-muted">
+                    Maximum 1000 characters • Attachments up to 10MB
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const messageForm = document.getElementById('messageForm');
+    const messageTextarea = document.getElementById('messageTextarea');
+    const sendBtn = document.getElementById('sendBtn');
+    const attachmentInput = document.getElementById('attachmentInput');
+    const attachmentPreview = document.getElementById('attachmentPreview');
+    const attachmentName = document.getElementById('attachmentName');
+    const attachmentSize = document.getElementById('attachmentSize');
+    const removeAttachment = document.getElementById('removeAttachment');
+    
+    let selectedFile = null;
+    
+    // File attachment handling
+    attachmentInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        
+        if (file) {
+            // Validate file size (10MB limit)
+            const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+            if (file.size > maxSize) {
+                alert('File is too large. Please select a file smaller than 10MB.');
+                this.value = '';
+                return;
+            }
+            
+            // Validate file type
+            const allowedTypes = [
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'text/plain',
+                'image/jpeg',
+                'image/png',
+                'image/gif',
+                'video/mp4',
+                'audio/mpeg',
+                'audio/mp3',
+                'application/zip',
+                'application/x-rar-compressed'
+            ];
+            
+            if (!allowedTypes.includes(file.type)) {
+                alert('File type not supported. Please select a valid file type.');
+                this.value = '';
+                return;
+            }
+            
+            selectedFile = file;
+            
+            // Show preview
+            attachmentName.textContent = file.name;
+            attachmentSize.textContent = formatFileSize(file.size);
+            attachmentPreview.style.display = 'block';
+            
+            // Update placeholder
+            if (!messageTextarea.value.trim()) {
+                messageTextarea.placeholder = 'Add a message (optional)...';
+            }
+        }
+    });
+    
+    // Remove attachment
+    removeAttachment.addEventListener('click', function() {
+        selectedFile = null;
+        attachmentInput.value = '';
+        attachmentPreview.style.display = 'none';
+        messageTextarea.placeholder = 'Type your message...';
+    });
+    
+    // Form validation
+    messageForm.addEventListener('submit', function(e) {
+        const messageContent = messageTextarea.value.trim();
+        
+        // Allow submission if there's either message content or an attachment
+        if (!messageContent && !selectedFile) {
+            e.preventDefault();
+            alert('Please enter a message or attach a file.');
+            messageTextarea.focus();
+            return false;
+        }
+        
+        // Disable send button to prevent double submission
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        
+        return true;
+    });
+    
+    // Auto-resize textarea
+    messageTextarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+    
+    // Enter key to send (Shift+Enter for new line)
+    messageTextarea.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (typeof messageForm.requestSubmit === 'function') {
+                messageForm.requestSubmit();
+            } else {
+                messageForm.submit();
+            }
+        }
+    });
+    
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Auto-scroll to bottom on page load
+    const messagesContainer = document.querySelector('.chat-messages');
+    if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+});
+</script>
+{% endblock %}

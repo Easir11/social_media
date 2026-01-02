@@ -1,0 +1,596 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home - Barta 2.0{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 50%, #a29bfe 100%);
+        color: white;
+        padding: 5rem 0;
+        margin-bottom: 3rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><radialGradient id="a" cx="50%" cy="50%"><stop offset="0%" stop-color="rgba(255,255,255,.1)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><circle fill="url(%23a)" cx="10" cy="10" r="10"/><circle fill="url(%23a)" cx="50" cy="10" r="10"/><circle fill="url(%23a)" cx="90" cy="10" r="10"/></svg>');
+        background-size: 100px 50px;
+        animation: float 10s ease-in-out infinite;
+        opacity: 0.3;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .hero-content h1 {
+        font-size: 4rem;
+        font-weight: 800;
+        margin-bottom: 1.5rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        background: linear-gradient(45deg, #ffffff, #f8f9ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .hero-content p {
+        font-size: 1.3rem;
+        opacity: 0.95;
+        margin-bottom: 2.5rem;
+        font-weight: 500;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+    
+    .hero-btn {
+        background: linear-gradient(135deg, #feca57, #ff9ff3);
+        border: none;
+        padding: 15px 40px;
+        border-radius: 50px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 0 8px 25px rgba(254, 202, 87, 0.4);
+        transition: all 0.3s ease;
+    }
+    
+    .hero-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 40px rgba(254, 202, 87, 0.6);
+    }
+    
+    .feature-card {
+        text-align: center;
+        padding: 2.5rem;
+        height: 100%;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+        background: linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%);
+        border: 1px solid rgba(255, 107, 107, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #feca57);
+        background-size: 300% 100%;
+        animation: rainbow 3s ease infinite;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-15px);
+        box-shadow: 0 20px 50px rgba(255, 107, 107, 0.2);
+        background: linear-gradient(145deg, #fff5f5 0%, #f0f8ff 100%);
+    }
+    
+    .feature-icon {
+        font-size: 3.5rem;
+        background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1.5rem;
+        display: inline-block;
+        transition: transform 0.3s ease;
+    }
+    
+    .feature-card:hover .feature-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+    
+    .stats-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        color: white;
+        padding: 4rem 0;
+        margin: 4rem 0;
+        border-radius: 30px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stats-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 2px, transparent 2px),
+                    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 1px, transparent 1px),
+                    radial-gradient(circle at 40% 40%, rgba(255,255,255,0.1) 1px, transparent 1px);
+        background-size: 60px 60px, 40px 40px, 80px 80px;
+    }
+    
+    .stats-section .container {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 2rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .stat-item:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .stat-number {
+        font-size: 3rem;
+        font-weight: 800;
+        color: #feca57;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.9);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .cta-section {
+        background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%);
+        color: white;
+        padding: 4rem 0;
+        border-radius: 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        margin: 3rem 0;
+    }
+    
+    .cta-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 10px,
+            rgba(255, 255, 255, 0.05) 10px,
+            rgba(255, 255, 255, 0.05) 20px
+        );
+        animation: move 10s linear infinite;
+    }
+    
+    @keyframes move {
+        0% { transform: translate(-50%, -50%) rotate(0deg); }
+        100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    
+    .cta-section .container {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .cta-section h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .cta-section p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .hero-content h1 {
+            font-size: 2.5rem;
+        }
+        
+        .hero-content p {
+            font-size: 1.1rem;
+        }
+        
+        .feature-card {
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+        }
+        
+        .cta-section h2 {
+            font-size: 2rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .hero-section {
+            padding: 3rem 0;
+        }
+        
+        .hero-content h1 {
+            font-size: 2rem;
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+        }
+        
+        .stats-section {
+            padding: 3rem 0;
+        }
+        
+        .stat-item {
+            padding: 1.5rem 1rem;
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+<!-- Authenticated User Feed -->
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Create Post Section -->
+            <div class="card hover-lift mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            {% if current_user_owner.profile_picture %}
+                                <img src="{{ current_user_owner.profile_picture.url }}" alt="Profile" class="profile-avatar" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 3px solid transparent; border-image: linear-gradient(45deg, #ff6b6b, #4ecdc4) 1;">
+                            {% else %}
+                                <div class="user-avatar bg-gradient-primary d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; border-radius: 50%; color: white; font-weight: 700; font-size: 1.2rem;">
+                                    {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <a href="{% url 'create_post' %}" class="btn btn-outline-primary w-100 text-start shadow-colorful" style="border-radius: 25px; border: 2px solid transparent; border-image: linear-gradient(45deg, #ff6b6b, #4ecdc4) 1; font-weight: 600;">
+                                <i class="fas fa-edit me-2 icon-colorful"></i>What's on your mind, {{ user.first_name }}?
+                            </a>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-around pt-3" style="border-top: 2px solid transparent; border-image: linear-gradient(90deg, #ff6b6b, #4ecdc4, #feca57) 1;">
+                        <a href="{% url 'create_post' %}" class="btn btn-light flex-fill me-2 hover-lift" style="border-radius: 15px; background: linear-gradient(145deg, #e8f5e8 0%, #f0fff0 100%); border: none; font-weight: 600;">
+                            <i class="fas fa-image me-2" style="color: #00b894;"></i>Photo
+                        </a>
+                        <a href="{% url 'create_post' %}" class="btn btn-light flex-fill me-2 hover-lift" style="border-radius: 15px; background: linear-gradient(145deg, #e8f4fd 0%, #f0f8ff 100%); border: none; font-weight: 600;">
+                            <i class="fas fa-video me-2" style="color: #0984e3;"></i>Video
+                        </a>
+                        <a href="{% url 'create_post' %}" class="btn btn-light flex-fill hover-lift" style="border-radius: 15px; background: linear-gradient(145deg, #fff8e1 0%, #fffef7 100%); border: none; font-weight: 600;">
+                            <i class="fas fa-smile me-2" style="color: #fdcb6e;"></i>Feeling
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Posts Feed -->
+            {% for post in posts %}
+            <div class="card post-card hover-lift mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            {% if post.owner.profile_picture %}
+                                <img src="{{ post.owner.profile_picture.url }}" alt="Profile" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 3px solid transparent; border-image: linear-gradient(45deg, #ff6b6b, #4ecdc4) 1;">
+                            {% else %}
+                                <div class="bg-gradient-primary d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; border-radius: 50%; color: white; font-weight: 700; font-size: 1.2rem;">
+                                    {{ post.owner.user.first_name|first|upper }}{{ post.owner.user.last_name|first|upper }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0 text-primary-gradient">
+                                <a href="{% url 'profile_user' post.owner.user.username %}" class="text-decoration-none" style="background: linear-gradient(135deg, #ff6b6b, #4ecdc4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">
+                                    {{ post.owner.user.first_name }} {{ post.owner.user.last_name }}
+                                </a>
+                            </h6>
+                            <small class="text-muted" style="font-weight: 500;">
+                                <i class="fas fa-clock me-1" style="color: #feca57;"></i>{{ post.created_at|timesince }} ago
+                            </small>
+                        </div>
+                        {% if post.owner == current_user_owner %}
+                        <div class="dropdown">
+                            <button class="btn btn-light btn-sm shadow-colorful" type="button" data-bs-toggle="dropdown" style="border-radius: 50%; width: 35px; height: 35px; background: linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%); border: 1px solid rgba(255, 107, 107, 0.2);">
+                                <i class="fas fa-ellipsis-h icon-colorful"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'edit_post' post.id %}"><i class="fas fa-edit me-2" style="color: #00b894;"></i>Edit</a></li>
+                                <li><a class="dropdown-item text-danger" href="{% url 'delete_post' post.id %}"><i class="fas fa-trash me-2" style="color: #ff7675;"></i>Delete</a></li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <p class="mb-3" style="font-size: 1.05rem; line-height: 1.6; color: #2d3436;">{{ post.content }}</p>
+                    
+                    {% if post.image %}
+                    <div class="mb-3">
+                        <img src="{{ post.image.url }}" alt="Post image" class="img-fluid shadow-colorful" style="max-width: 100%; height: auto; border-radius: 15px; border: 2px solid transparent; border-image: linear-gradient(45deg, #ff6b6b, #4ecdc4) 1;">
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3" style="border-top: 2px solid transparent; border-image: linear-gradient(90deg, rgba(255, 107, 107, 0.3), rgba(78, 205, 196, 0.3)) 1; padding-top: 1rem;">
+                        <div class="post-stats">
+                            <span class="badge-colorful me-2" style="background: linear-gradient(135deg, #ff7675, #fd79a8) !important; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.8rem;">
+                                <i class="fas fa-heart me-1"></i>{{ post.likes.count }} likes
+                            </span>
+                            <span class="badge-colorful" style="background: linear-gradient(135deg, #0984e3, #74b9ff) !important; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.8rem;">
+                                <i class="fas fa-comment me-1"></i>{{ post.comments.count }} comments
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="post-actions d-flex justify-content-around">
+                        <form action="{% url 'like_post' post.id %}" method="post" class="d-inline flex-fill me-2">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-light flex-fill hover-lift" style="border-radius: 15px; background: linear-gradient(145deg, #fff5f5 0%, #ffe6e6 100%); border: 1px solid rgba(255, 107, 107, 0.2); font-weight: 600;">
+                                {% if user.is_authenticated and current_user_owner in post.likes.all %}
+                                    <i class="fas fa-heart me-1" style="color: #ff7675;"></i>Unlike
+                                {% else %}
+                                    <i class="fas fa-heart me-1" style="color: #ff7675;"></i>Like
+                                {% endif %}
+                            </button>
+                        </form>
+                        <a href="{% url 'post_detail' post.id %}" class="btn btn-light flex-fill me-2 hover-lift" style="border-radius: 15px; background: linear-gradient(145deg, #e8f4fd 0%, #e1f5fe 100%); border: 1px solid rgba(9, 132, 227, 0.2); font-weight: 600;">
+                            <i class="fas fa-comment me-1" style="color: #0984e3;"></i>Comment
+                        </a>
+                        <button class="btn btn-light flex-fill hover-lift" style="border-radius: 15px; background: linear-gradient(145deg, #e8f5e8 0%, #f1f8e9 100%); border: 1px solid rgba(0, 184, 148, 0.2); font-weight: 600;">
+                            <i class="fas fa-share me-1" style="color: #00b894;"></i>Share
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="card text-center hover-lift">
+                <div class="card-body py-5">
+                    <div class="mb-3">
+                        <i class="fas fa-newspaper" style="font-size: 4rem; background: linear-gradient(135deg, #ddd, #f8f9fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+                    </div>
+                    <h5 class="text-primary-gradient mb-3">No posts yet</h5>
+                    <p class="text-muted mb-4">Be the first to share something amazing!</p>
+                    <a href="{% url 'create_post' %}" class="btn btn-primary shadow-colorful">
+                        <i class="fas fa-plus me-2"></i>Create Your First Post
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- User Profile Card -->
+            <div class="card profile-card mb-4">
+                <div class="card-body text-center position-relative">
+                    <div class="mb-3">
+                        {% if current_user_owner.profile_picture %}
+                            <img src="{{ current_user_owner.profile_picture.url }}" alt="Profile" class="profile-avatar shadow-colorful-lg" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 4px solid white;">
+                        {% else %}
+                            <div class="bg-gradient-secondary d-flex align-items-center justify-content-center mx-auto profile-avatar shadow-colorful-lg" style="width: 80px; height: 80px; border-radius: 50%; color: white; font-weight: 700; font-size: 2rem; border: 4px solid white;">
+                                {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <h5 class="text-primary-gradient">{{ user.first_name }} {{ user.last_name }}</h5>
+                    <p class="text-muted mb-3">@{{ user.username }}</p>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="stat-number">{{ current_user_owner.posts.count }}</div>
+                            <div class="stat-label">Posts</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-number">{{ current_user_owner.followers.count }}</div>
+                            <div class="stat-label">Followers</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-number">{{ current_user_owner.following.count }}</div>
+                            <div class="stat-label">Following</div>
+                        </div>
+                    </div>
+                    <a href="{% url 'profile' %}" class="btn btn-outline-primary mt-3">
+                        <i class="fas fa-user me-2"></i>View Profile
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Suggested Friends -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-users me-2"></i>People You May Know</h5>
+                </div>
+                <div class="card-body">
+                    {% for owner in suggested_users|slice:":3" %}
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="user-avatar me-3" style="width: 40px; height: 40px; font-size: 1rem;">
+                            {% if owner.profile_picture %}
+                                <img src="{{ owner.profile_picture.url }}" alt="Profile" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                            {% else %}
+                                {{ owner.user.first_name|first|upper }}{{ owner.user.last_name|first|upper }}
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">{{ owner.user.first_name }} {{ owner.user.last_name }}</h6>
+                            <small class="text-muted">@{{ owner.user.username }}</small>
+                        </div>
+                        <form action="{% url 'follow_user' owner.user.username %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary btn-sm">Follow</button>
+                        </form>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center">No suggestions available</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- Non-authenticated Landing Page -->
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <div class="hero-content">
+                    <h1>Welcome to Barta 2.0</h1>
+                    <p>Connect with friends, share your thoughts, and discover amazing content in our beautiful social platform.</p>
+                    <div class="hero-buttons">
+                        <a href="{% url 'signup' %}" class="btn btn-light btn-lg me-3">
+                            <i class="fas fa-user-plus me-2"></i>Join Now
+                        </a>
+                        <a href="{% url 'signin' %}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <i class="fas fa-users" style="font-size: 15rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<div class="container">
+    <div class="row text-center mb-5">
+        <div class="col-12">
+            <h2 class="mb-4">Why Choose Barta 2.0?</h2>
+            <p class="text-muted">Experience social networking like never before</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h4>Lightning Fast</h4>
+                <p class="text-muted">Built with modern technology for seamless performance and instant loading.</p>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h4>Secure & Private</h4>
+                <p class="text-muted">Your privacy matters. Advanced security features keep your data safe and secure.</p>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <h4>Mobile Friendly</h4>
+                <p class="text-muted">Fully responsive design that works perfectly on all devices and screen sizes.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Section -->
+<div class="container">
+    <div class="stats-section">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">2M+</span>
+                    <span class="stat-label">Happy Members</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">500K+</span>
+                    <span class="stat-label">Daily Interactions</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">1B+</span>
+                    <span class="stat-label">Messages Sent</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">4.9★</span>
+                    <span class="stat-label">User Rating</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA Section -->
+<div class="container">
+    <div class="cta-section">
+        <div class="container">
+            <div class="row justify-content-center text-center">
+                <div class="col-lg-8">
+                    <h2 class="text-gradient mb-4">Ready to Get Started?</h2>
+                    <p class="mb-4">Join thousands of users who are already connecting and sharing on Barta 2.0</p>
+                    <a href="{% url 'signup' %}" class="btn btn-primary btn-lg shadow-colorful">
+                        <i class="fas fa-rocket me-2"></i>Start Your Journey
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+
+{% endblock %}

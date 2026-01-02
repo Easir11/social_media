@@ -1,4 +1,4 @@
-# Barta 4.0 - Social Media Platform
+# Barta - Social Media Platform
 
 A modern, feature-rich social media platform built with Django, designed for connecting people through posts, follows, messaging, and more.
 
